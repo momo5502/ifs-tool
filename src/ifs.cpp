@@ -1,4 +1,4 @@
-﻿#include "std_include.hpp"
+#include "std_include.hpp"
 #include "ifs.hpp"
 
 ifs::ifs(const std::string& file)
@@ -35,7 +35,6 @@ bool ifs::is_file(const std::string& filename) const
 	if (!file_handle) return false;
 
 	const bool is_file_type = std::memcmp(file_handle->type, "FILE", 4);
-
 	SFileCloseFile(file_handle);
 
 	return is_file_type;
@@ -48,28 +47,27 @@ bool ifs::extract_file(const std::string& filename, const std::string& outfile) 
 
 std::vector<std::string> ifs::get_file_list() const
 {
-	std::vector<std::string> result;
+	this->extract_file("(listfile)", "tmp");
+	std::vector<std::string> Results{};
+	std::ifstream Stream("tmp");
+	std::string Line;
 
-	std::string list_file;
-	if (!this->read_file("(listfile)", &list_file)) return result;
-
-	std::stringstream stream(list_file);
-	std::string target;
-
-	while (std::getline(stream, target, '\n'))
+	while (std::getline(Stream, Line, '\n'))
 	{
-		if (!target.empty() && target.back() == '\r')
+		if (!Line.empty() && Line.back() == '\r')
 		{
-			target.pop_back();
+			Line.pop_back();
 		}
 
-		if (!target.empty() && this->is_file(target))
+		if (!Line.empty() && this->is_file(Line))
 		{
-			result.push_back(target);
+			Results.push_back(Line);
 		}
 	}
 
-	return result;
+	Stream.close();
+	std::remove("tmp");
+	return Results;
 }
 
 char* ifs::get_library()
